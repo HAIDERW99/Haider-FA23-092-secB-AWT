@@ -6,11 +6,11 @@ import { normalizeMediaUrl } from '@/lib/media'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request)
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const validatedData = updateAdSchema.parse(body)
 
@@ -111,11 +111,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request)
-    const { id } = params
+    const { id } = await params
 
     // Check if the ad exists and belongs to the user
     const { data: existingAd, error: fetchError } = await supabase

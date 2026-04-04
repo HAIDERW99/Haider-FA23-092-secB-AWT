@@ -5,11 +5,11 @@ import { verifyPaymentSchema } from '@/schemas'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth(request)
-    const { id } = params
+    const { id } = await params
 
     // Check if user has admin role or higher
     if (!hasRole(user, 'admin')) {

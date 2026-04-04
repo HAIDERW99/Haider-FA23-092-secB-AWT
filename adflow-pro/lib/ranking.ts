@@ -26,7 +26,7 @@ export function calculateRankScore(ad: Partial<Ad>): number {
   }
   
   // Freshness points
-  score += getFreshnessPoints(ad.publish_at)
+  score += getFreshnessPoints(ad.publish_at || null)
   
   // Admin boost
   score += ad.admin_boost || 0

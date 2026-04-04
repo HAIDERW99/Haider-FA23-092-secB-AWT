@@ -1,15 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Navbar } from '@/components/layout/navbar'
-import { Footer } from '@/components/layout/footer'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
@@ -40,16 +35,12 @@ export default function LoginPage() {
         body: JSON.stringify(formData)
       })
 
-      const data = await res.json()
-
-      if (data.success) {
-        localStorage.setItem('user', JSON.stringify(data.data.user))
-        localStorage.setItem('session', JSON.stringify(data.data.session))
-        
-        const redirect = searchParams.get('redirect') || '/dashboard/client'
-        router.push(redirect)
+      if (res.ok) {
+        const data = await res.json()
+        router.push(searchParams.get('redirect') || '/dashboard/client')
       } else {
-        setError(data.error || 'Login failed')
+        const errorData = await res.json()
+        setError(errorData.error || 'Login failed')
       }
     } catch (error) {
       setError('Network error. Please try again.')
@@ -59,155 +50,286 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB]">
-      <Navbar />
-      
-      <div className="flex min-h-[calc(100vh-64px)]">
-        {/* Left Side - Navy Background */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0F1B2D] via-[#1A2E4A] to-[#253447] items-center justify-center p-12">
-          <div className="text-center text-white max-w-md">
-            <h1 className="text-4xl font-bold mb-4">
-              Welcome Back
-            </h1>
-            <p className="text-xl mb-8 text-white/90">
-              Sign in to your AdFlow Pro account
-            </p>
-            
-            <div className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/20 rounded-lg p-3">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3a1 1 0 01-1-1v-4a1 1 0 011-1h5.586l4.707 4.707a1 1 0 001.414 0l4.707-4.707A1 1 0 0017 8v4a1 1 0 01-1 1H9a7 7 0 01-7-7z" clipRule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Secure Login</h3>
-                  <p className="text-white/80">Your account information is safe with us</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/20 rounded-lg p-3">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100 2H9z"/>
-                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100 4h-.5a1 1 0 000-2H8a2 2 0 012-2h2A2 2 0 012 2v9A2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clipRule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">Quick Access</h3>
-                  <p className="text-white/80">Get back to your dashboard instantly</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <div className="bg-white/20 rounded-lg p-3">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 001.732 3L13.732 15H8.268l4.866-4.5A1 1 0 0013 10V3a1 1 0 00-1-1H8a1 1 0 00-1 1v7a1 1 0 00.867.5z" clipRule="evenodd"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">24/7 Support</h3>
-                  <p className="text-white/80">We're here to help anytime</p>
-                </div>
-              </div>
+    <div style={{ height: '100vh', overflow: 'hidden', display: 'flex' }}>
+      {/* LEFT SIDE - Navy Background */}
+      <div style={{ 
+        width: '50%', 
+        background: '#0F1B2D',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '48px',
+        position: 'relative'
+      }}>
+        <div style={{ textAlign: 'center', color: 'white', maxWidth: '400px' }}>
+          {/* Logo */}
+          <div style={{
+            fontSize: '32px',
+            fontWeight: 'bold',
+            color: '#F5A623',
+            marginBottom: '16px'
+          }}>
+            AdFlow Pro
+          </div>
+          
+          {/* Tagline */}
+          <div style={{
+            fontSize: '18px',
+            marginBottom: '48px',
+            opacity: 0.9
+          }}>
+            Pakistan's Most Trusted Marketplace
+          </div>
+          
+          {/* Feature Bullets */}
+          <div style={{ textAlign: 'left', marginBottom: '48px' }}>
+            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+              <span style={{ color: '#F5A623', marginRight: '12px', fontSize: '18px' }}>✓</span>
+              <span>Verified Listings</span>
+            </div>
+            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+              <span style={{ color: '#F5A623', marginRight: '12px', fontSize: '18px' }}>✓</span>
+              <span>Secure Payments</span>
+            </div>
+            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+              <span style={{ color: '#F5A623', marginRight: '12px', fontSize: '18px' }}>✓</span>
+              <span>Fast Approval</span>
             </div>
           </div>
-        </div>
-
-        {/* Right Side - White Form */}
-        <div className="flex-1 flex items-center justify-center p-8">
-          <Card className="w-full max-w-md border-0 shadow-xl">
-            <CardHeader className="text-center pb-6">
-              <CardTitle className="text-2xl font-bold text-[#0F1B2D] mb-2">
-                Sign In
-              </CardTitle>
-              <p className="text-[#6B7280]">
-                Don't have an account?{' '}
-                <Link href="/register" className="text-[#F5A623] hover:text-[#B8720A] font-medium">
-                  Create one here
-                </Link>
-              </p>
-            </CardHeader>
-            
-            <CardContent className="space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-[#0F1B2D] mb-2">
-                    Email Address
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your email"
-                    className="h-12 rounded-lg border-2 border-gray-300 focus:border-[#F5A623] focus:ring-0 text-base px-4"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-[#0F1B2D] mb-2">
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    placeholder="Enter your password"
-                    className="h-12 rounded-lg border-2 border-gray-300 focus:border-[#F5A623] focus:ring-0 text-base px-4"
-                  />
-                </div>
-                
-                {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-red-600 text-sm">{error}</p>
-                  </div>
-                )}
-                
-                <Button 
-                  type="submit" 
-                  className="w-full h-12 bg-[#F5A623] hover:bg-[#B8720A] text-white rounded-full text-base font-medium"
-                  disabled={loading}
-                >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-              
-              <div className="text-center">
-                <Link href="/forgot-password" className="text-[#F5A623] hover:text-[#B8720A] text-sm">
-                  Forgot your password?
-                </Link>
-              </div>
-              
-              {/* Demo Accounts */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-[#0F1B2D] mb-4">Demo Accounts:</h3>
-                <div className="space-y-3 text-xs">
-                  <div className="bg-[#FEF3DC] p-3 rounded-lg border border-[#F5A623]">
-                    <div className="font-semibold text-[#0F1B2D]">Admin:</div>
-                    <div className="text-[#6B7280]">admin@example.com</div>
-                  </div>
-                  <div className="bg-[#FEF3DC] p-3 rounded-lg border border-[#F5A623]">
-                    <div className="font-semibold text-[#0F1B2D]">Moderator:</div>
-                    <div className="text-[#6B7280]">moderator@example.com</div>
-                  </div>
-                  <div className="bg-[#FEF3DC] p-3 rounded-lg border border-[#F5A623]">
-                    <div className="font-semibold text-[#0F1B2D]">Client:</div>
-                    <div className="text-[#6B7280]">john@example.com</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          
+          {/* Stats */}
+          <div style={{
+            fontSize: '14px',
+            opacity: 0.8,
+            borderTop: '1px solid rgba(255,255,255,0.2)',
+            paddingTop: '24px'
+          }}>
+            500+ Ads | 200+ Sellers | 5 Cities
+          </div>
         </div>
       </div>
 
-      <Footer />
+      {/* RIGHT SIDE - White Background */}
+      <div style={{ 
+        width: '50%', 
+        background: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '48px'
+      }}>
+        <div style={{ width: '100%', maxWidth: '400px' }}>
+          {/* Welcome Heading */}
+          <div style={{
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: '#0F1B2D',
+            marginBottom: '8px',
+            textAlign: 'center'
+          }}>
+            Welcome Back
+          </div>
+          
+          <div style={{
+            fontSize: '16px',
+            color: '#6B7280',
+            marginBottom: '32px',
+            textAlign: 'center'
+          }}>
+            Sign in to your account
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              background: '#FEE2E2',
+              color: '#DC2626',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              fontSize: '14px'
+            }}>
+              {error}
+            </div>
+          )}
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit}>
+            {/* Email Field */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+                style={{
+                  width: '100%',
+                  height: '48px',
+                  padding: '12px 16px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#F5A623'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#E5E7EB'
+                }}
+              />
+            </div>
+
+            {/* Password Field */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '8px'
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+                style={{
+                  width: '100%',
+                  height: '48px',
+                  padding: '12px 16px',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#F5A623'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#E5E7EB'
+                }}
+              />
+            </div>
+
+            {/* Sign In Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                height: '48px',
+                background: '#F5A623',
+                color: '#0F1B2D',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                marginBottom: '16px'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.background = '#B8720A'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.background = '#F5A623'
+                }
+              }}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Forgot Password */}
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <Link href="/forgot-password" style={{
+              color: '#F5A623',
+              textDecoration: 'none',
+              fontSize: '14px'
+            }}>
+              Forgot password?
+            </Link>
+          </div>
+
+          {/* Divider */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: '24px'
+          }}>
+            <div style={{ flex: 1, height: '1px', background: '#E5E7EB' }}></div>
+            <span style={{ padding: '0 16px', color: '#6B7280', fontSize: '14px' }}>OR</span>
+            <div style={{ flex: 1, height: '1px', background: '#E5E7EB' }}></div>
+          </div>
+
+          {/* Register Link */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <span style={{ color: '#6B7280', fontSize: '14px' }}>
+              Don't have an account?{' '}
+            </span>
+            <Link href="/register" style={{
+              color: '#F5A623',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              Register
+            </Link>
+          </div>
+
+          {/* Demo Accounts */}
+          <div style={{
+            background: '#FEF3DC',
+            padding: '16px',
+            borderRadius: '8px',
+            fontSize: '12px'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#0F1B2D' }}>
+              Demo Accounts:
+            </div>
+            <div style={{ marginBottom: '4px', color: '#6B7280' }}>
+              Client: client@demo.com / password
+            </div>
+            <div style={{ marginBottom: '4px', color: '#6B7280' }}>
+              Moderator: mod@demo.com / password
+            </div>
+            <div style={{ color: '#6B7280' }}>
+              Admin: admin@demo.com / password
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   )
 }

@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
-import { AdCard } from '@/components/ads/ad-card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 
 interface Ad {
@@ -56,74 +51,50 @@ interface Ad {
   }>
 }
 
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
-
-export default function ExplorePage() {
+function ExploreContent() {
   const searchParams = useSearchParams()
-  const [ads, setAds] = useState<Ad[]>([])
-  const [categories, setCategories] = useState<any[]>([])
-  const [cities, setCities] = useState<any[]>([])
-  const [pagination, setPagination] = useState<Pagination | null>(null)
+  const [allAds, setAllAds] = useState<Ad[]>([])
+  const [filteredAds, setFilteredAds] = useState<Ad[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
-    search: searchParams.get('search') || '',
-    category: searchParams.get('category') || '',
-    city: searchParams.get('city') || '',
-    sort: searchParams.get('sort') || 'rank'
-  })
-
-  useEffect(() => {
-    fetchCategories()
-    fetchCities()
-  }, [])
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all')
+  const [selectedCity, setSelectedCity] = useState(searchParams.get('city') || 'all')
 
   useEffect(() => {
     fetchAds()
-  }, [filters])
+  }, [])
 
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch('/api/categories')
-      if (res.ok) {
-        const data = await res.json()
-        setCategories(data.data || [])
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error)
+  useEffect(() => {
+    // Apply all filters whenever any filter changes
+    let result = allAds
+    
+    // Apply search filter
+    if (searchQuery) {
+      result = result.filter(ad => 
+        ad.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     }
-  }
-
-  const fetchCities = async () => {
-    try {
-      const res = await fetch('/api/cities')
-      if (res.ok) {
-        const data = await res.json()
-        setCities(data.data || [])
-      }
-    } catch (error) {
-      console.error('Error fetching cities:', error)
+    
+    // Apply category filter
+    if (selectedCategory !== 'all') {
+      result = result.filter(ad => ad.categories.name === selectedCategory)
     }
-  }
+    
+    // Apply city filter
+    if (selectedCity !== 'all') {
+      result = result.filter(ad => ad.cities.name === selectedCity)
+    }
+    
+    setFilteredAds(result)
+  }, [searchQuery, selectedCategory, selectedCity, allAds])
 
   const fetchAds = async () => {
-    setLoading(true)
     try {
-      const params = new URLSearchParams({
-        ...filters,
-        page: '1',
-        limit: '12'
-      })
-      
-      const res = await fetch(`/api/ads?${params}`)
+      setLoading(true)
+      const res = await fetch('/api/ads')
       if (res.ok) {
         const data = await res.json()
-        setAds(data.data || [])
-        setPagination(data.pagination)
+        setAllAds(data.data || [])
       }
     } catch (error) {
       console.error('Error fetching ads:', error)
@@ -132,192 +103,353 @@ export default function ExplorePage() {
     }
   }
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
+  const handleSearch = () => {
+    // Search button triggers the filter effect (already handled by useEffect)
   }
 
   const clearFilters = () => {
-    setFilters({
-      search: '',
-      category: '',
-      city: '',
-      sort: 'rank'
-    })
+    setSearchQuery('')
+    setSelectedCategory('all')
+    setSelectedCity('all')
+  }
+
+  const getPackageBadgeColor = (packageName: string, isFeatured: boolean) => {
+    if (isFeatured) return '#F5A623' // Amber
+    if (packageName === 'Standard') return '#3B82F6' // Blue
+    return '#6B7280' // Gray
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    if (status === 'published') return '#10B981' // Green
+    return '#6B7280' // Gray
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F8F9FB' }}>
+        <Navbar />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '100px' }}>
+          <div style={{ fontSize: '18px', color: '#6B7280' }}>Loading ads...</div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB]">
+    <div style={{ minHeight: '100vh', background: '#F8F9FB' }}>
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Search and Filters Section */}
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '24px',
+        background: 'white',
+        borderBottom: '1px solid #E5E7EB'
+      }}>
         {/* Search Bar */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search ads..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="h-12 rounded-lg border-2 border-gray-300 focus:border-[#F5A623] focus:ring-0 text-lg"
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <Select
-                value={filters.sort}
-                onChange={(e) => handleFilterChange('sort', e.target.value)}
-                className="h-12 rounded-lg border-2 border-gray-300 focus:border-[#F5A623] focus:ring-0"
-              >
-                <option value="rank">Best Match</option>
-                <option value="newest">Newest First</option>
-                <option value="price_low">Price Low-High</option>
-                <option value="price_high">Price High-Low</option>
-              </Select>
-              
-              <Link href="/register">
-                <Button className="bg-[#F5A623] hover:bg-[#B8720A] text-white h-12 px-6">
-                  Post Ad
-                </Button>
-              </Link>
-            </div>
-          </div>
+        <div style={{ 
+          marginBottom: '16px',
+          display: 'flex',
+          gap: '16px',
+          alignItems: 'center'
+        }}>
+          <input
+            type="text"
+            placeholder="Search ads..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              flex: 1,
+              height: '48px',
+              padding: '0 16px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '8px',
+              fontSize: '16px',
+              outline: 'none'
+            }}
+          />
+          <button
+            onClick={handleSearch}
+            style={{
+              height: '48px',
+              padding: '0 24px',
+              background: '#0F1B2D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Search
+          </button>
         </div>
 
-        {/* Filters */}
-        <div className="mb-8 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#0F1B2D] mb-2">Category</label>
-              <Select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="rounded-lg border-gray-300 focus:border-[#F5A623] focus:ring-0"
-              >
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.slug}>
-                    {cat.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-[#0F1B2D] mb-2">City</label>
-              <Select
-                value={filters.city}
-                onChange={(e) => handleFilterChange('city', e.target.value)}
-                className="rounded-lg border-gray-300 focus:border-[#F5A623] focus:ring-0"
-              >
-                <option value="">All Cities</option>
-                {cities.map((city) => (
-                  <option key={city.id} value={city.slug}>
-                    {city.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            
-            <div className="flex items-end">
-              <Button 
-                variant="outline" 
-                onClick={clearFilters}
-                className="rounded-lg border-gray-300 hover:border-[#0F1B2D]"
-              >
-                Clear Filters
-              </Button>
-            </div>
+        {/* Filters Row */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '16px', 
+          alignItems: 'center',
+          flexWrap: 'wrap'
+        }}>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            style={{
+              height: '40px',
+              padding: '0 12px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '6px',
+              fontSize: '14px',
+              background: 'white'
+            }}
+          >
+            <option value="all">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Vehicles">Vehicles</option>
+            <option value="Property">Property</option>
+            <option value="Jobs">Jobs</option>
+          </select>
+
+          <select
+            value={selectedCity}
+            onChange={(e) => setSelectedCity(e.target.value)}
+            style={{
+              height: '40px',
+              padding: '0 12px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '6px',
+              fontSize: '14px',
+              background: 'white'
+            }}
+          >
+            <option value="all">All Cities</option>
+            <option value="Karachi">Karachi</option>
+            <option value="Lahore">Lahore</option>
+            <option value="Islamabad">Islamabad</option>
+            <option value="Peshawar">Peshawar</option>
+          </select>
+
+          <button
+            onClick={clearFilters}
+            style={{
+              height: '40px',
+              padding: '0 16px',
+              background: '#EF4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            Clear Filters
+          </button>
+
+          <div style={{ 
+            fontSize: '14px', 
+            color: '#6B7280',
+            marginLeft: 'auto'
+          }}>
+            Showing {filteredAds.length} ads
           </div>
         </div>
+      </div>
 
-        {/* Results Header */}
-        <div className="mb-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-[#0F1B2D]">
-              {filters.search ? `"${filters.search}"` : 'All Ads'}
-            </h2>
-            {pagination && (
-              <p className="text-[#6B7280] mt-1">
-                Showing {ads.length} of {pagination.total} ads
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Ads Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
-                <div className="h-56 bg-gray-200 rounded-lg mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            ))}
-          </div>
-        ) : ads.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ads.map((ad) => (
-              <AdCard key={ad.id} ad={ad} />
-            ))}
+      {/* Ads Grid */}
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: '24px'
+      }}>
+        {filteredAds.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '60px 20px',
+            fontSize: '18px',
+            color: '#6B7280'
+          }}>
+            No ads found. Try adjusting your filters.
           </div>
         ) : (
-          <div className="text-center py-16">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200">
-              <h3 className="text-xl font-semibold text-[#0F1B2D] mb-2">No ads found</h3>
-              <p className="text-[#6B7280] mb-4">
-                Try adjusting your filters or search terms
-              </p>
-              <Button onClick={clearFilters} className="bg-[#F5A623] hover:bg-[#B8720A] text-white">
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        )}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '24px'
+          }}>
+            {filteredAds.map((ad) => (
+              <div
+                key={ad.id}
+                style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  border: '1px solid #E5E7EB',
+                  overflow: 'hidden',
+                  transition: 'transform 0.2s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)'
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                {/* Image Placeholder */}
+                <div style={{ 
+                  height: '180px', 
+                  background: '#1A2E4A',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
+                }}>
+                  {ad.ad_media && ad.ad_media[0] ? (
+                    <img
+                      src={ad.ad_media[0].thumbnail_url}
+                      alt={ad.title}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                        target.parentElement!.innerHTML = `
+                          <div style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            height: 100%;
+                            color: white;
+                            font-size: 48px;
+                            font-weight: bold;
+                          ">
+                            ${ad.title.charAt(0).toUpperCase()}
+                          </div>
+                        `
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      color: 'white',
+                      fontSize: '48px',
+                      fontWeight: 'bold'
+                    }}>
+                      {ad.title.charAt(0).toUpperCase()}
+                    </div>
+                  )}
 
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <div className="mt-12 flex justify-center">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                disabled={pagination.page === 1}
-                onClick={() => handleFilterChange('page', String(pagination.page - 1))}
-                className="rounded-lg"
-              >
-                Previous
-              </Button>
-              
-              <div className="flex space-x-1">
-                {[...Array(pagination.totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => handleFilterChange('page', String(i + 1))}
-                    className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                      pagination.page === i + 1
-                        ? 'bg-[#F5A623] text-white'
-                        : 'bg-white text-[#0F1B2D] hover:bg-[#F8F9FB] border border-gray-200'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                  {/* Package Badge */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: 'white',
+                    background: getPackageBadgeColor(ad.packages.name, ad.packages.is_featured)
+                  }}>
+                    {ad.packages.is_featured ? 'Premium' : ad.packages.name}
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div style={{ padding: '16px' }}>
+                  {/* Title */}
+                  <h3 style={{
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: '#0F1B2D',
+                    marginBottom: '8px',
+                    lineHeight: '1.4'
+                  }}>
+                    {ad.title}
+                  </h3>
+
+                  {/* Price */}
+                  <div style={{
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    color: '#F5A623',
+                    marginBottom: '8px'
+                  }}>
+                    ${ad.packages.price}
+                  </div>
+
+                  {/* City + Category */}
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#6B7280',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    gap: '12px'
+                  }}>
+                    <span>📍 {ad.cities.name}</span>
+                    <span>📁 {ad.categories.name}</span>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: 'white',
+                    background: getStatusBadgeColor(ad.status),
+                    marginBottom: '12px'
+                  }}>
+                    {ad.status}
+                  </div>
+
+                  {/* View Details Button */}
+                  <Link href={`/ads/${ad.slug}`}>
+                    <div style={{
+                      background: '#F5A623',
+                      color: 'white',
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s ease'
+                    }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#B8720A'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#F5A623'
+                      }}
+                    >
+                      View Details
+                    </div>
+                  </Link>
+                </div>
               </div>
-              
-              <Button
-                variant="outline"
-                disabled={pagination.page === pagination.totalPages}
-                onClick={() => handleFilterChange('page', String(pagination.page + 1))}
-                className="rounded-lg"
-              >
-                Next
-              </Button>
-            </div>
+            ))}
           </div>
         )}
       </div>
 
       <Footer />
     </div>
+  )
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+      <ExploreContent />
+    </Suspense>
   )
 }

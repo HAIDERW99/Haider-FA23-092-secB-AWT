@@ -275,14 +275,17 @@ export default function ClientDashboard() {
                       </div>
                     ))}
                   </div>
-                ) : (
+                </div>
+              ) : (
+                <div className="p-6">
                   <AdTable
                     ads={ads.slice(0, 5)}
                     onEdit={handleEditAd}
                     onDelete={handleDeleteAd}
                     showActions={true}
                   />
-                )}
+                </div>
+              )}
             </div>
           </div>
         </div>
