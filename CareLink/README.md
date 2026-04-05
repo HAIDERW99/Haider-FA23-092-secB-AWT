@@ -3,6 +3,15 @@
 **Appinty** is a full-stack web application designed to make healthcare more accessible by simplifying the process of booking doctor appointments. It offers three levels of login: **Patient**, **Doctor**, and **Admin**, each with distinct features tailored to their roles. The app integrates **online payment gateways (Stripe and STRIPE)** to facilitate seamless and secure payments. Built using the **MERN stack** (MongoDB, Express.js, React.js, and Node.js), CareLink provides an efficient, user-friendly experience for both patients and healthcare providers.
 ![WhatsApp Image 2026-04-05 at 11 01 05 PM](https://github.com/user-attachments/assets/69dfe71a-2f52-44ca-9588-e8b183d9afcb)
 ![WhatsApp Image 2026-04-05 at 11 01 05 PM (1)](https://github.com/user-attachments/assets/d2310793-cf36-4c02-9f5e-668e6e4391d1)
+![WhatsApp Image 2026-04-05 at 11 01 05 PM (2)](https://github.com/user-attachments/assets/2a68355b-cf3a-4ca1-ae73-f4a82f5fc135)
+![WhatsApp Image 2026-04-05 at 11 01 05 PM (3)](https://github.com/user-attachments/assets/56632925-06ea-4988-bac2-3f01a7e48633)
+![WhatsApp Image 2026-04-05 at 11 01 05 PM (4)](https://github.com/user-attachments/assets/bcbc1cd0-c681-44cd-a041-a28605f62c2f)
+![WhatsApp Image 2026-04-05 at 11 01 05 PM (5)](https://github.com/user-attachments/assets/ad4aa787-b0eb-4149-8854-4f19d2a14b52)
+![WhatsApp Image 2026-04-05 at 11 01 05 PM (6)](https://github.com/user-attachments/assets/20f37f9d-7148-46a4-9cc3-e516ec2e9a67)
+
+
+
+
 
 
 
