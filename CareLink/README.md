@@ -2,7 +2,7 @@
 Website link is here.
 https://fa-23-bse-081-hamza-6-b-y5xy.vercel.app/
 
-Credentiials...
+Credentials.........
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASSWORD="adminpassword"
 USER_EMAIL="haiderwahla199@gmail.com"
