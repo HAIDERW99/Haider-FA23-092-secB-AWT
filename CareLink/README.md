@@ -1,4 +1,6 @@
 # CareLink - Doctor Appointment Web App
+Website link is here.
+https://fa-23-bse-081-hamza-6-b-y5xy.vercel.app/
 
 **Appinty** is a full-stack web application designed to make healthcare more accessible by simplifying the process of booking doctor appointments. It offers three levels of login: **Patient**, **Doctor**, and **Admin**, each with distinct features tailored to their roles. The app integrates **online payment gateways (Stripe and STRIPE)** to facilitate seamless and secure payments. Built using the **MERN stack** (MongoDB, Express.js, React.js, and Node.js), CareLink provides an efficient, user-friendly experience for both patients and healthcare providers.
 ![WhatsApp Image 2026-04-05 at 11 01 05 PM](https://github.com/user-attachments/assets/69dfe71a-2f52-44ca-9588-e8b183d9afcb)
