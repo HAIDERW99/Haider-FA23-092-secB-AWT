@@ -1,0 +1,126 @@
+/* ── Global Reset & Variables ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:       #16a34a;
+  --green-dark:  #15803d;
+  --green-light: #dcfce7;
+  --green-bg:    #f0fdf4;
+  --yellow:      #fbbf24;
+  --red:         #ef4444;
+  --blue:        #3b82f6;
+  --gray-50:     #f9fafb;
+  --gray-100:    #f3f4f6;
+  --gray-200:    #e5e7eb;
+  --gray-400:    #9ca3af;
+  --gray-500:    #6b7280;
+  --gray-600:    #4b5563;
+  --gray-700:    #374151;
+  --gray-800:    #1f2937;
+  --gray-900:    #111827;
+  --white:       #ffffff;
+  --radius:      12px;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,.12);
+  --font:        'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  color: var(--gray-800);
+  background: var(--white);
+  line-height: 1.6;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+img { max-width: 100%; display: block; }
+
+/* ── Utility ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.section    { padding: 80px 0; }
+.section-alt { background: var(--gray-50); }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--green-light); color: var(--green-dark);
+  font-size: .75rem; font-weight: 600; padding: 4px 12px;
+  border-radius: 999px; margin-bottom: 16px;
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px; border-radius: var(--radius);
+  font-size: .95rem; font-weight: 600; cursor: pointer;
+  border: none; transition: all .2s;
+}
+.btn-primary  { background: var(--green); color: var(--white); }
+.btn-primary:hover  { background: var(--green-dark); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-outline  { background: transparent; color: var(--green); border: 2px solid var(--green); }
+.btn-outline:hover  { background: var(--green-light); }
+.btn-sm { padding: 8px 16px; font-size: .85rem; }
+
+.tag {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  font-size: .75rem; font-weight: 600;
+}
+.tag-green  { background: var(--green-light); color: var(--green-dark); }
+.tag-yellow { background: #fef9c3; color: #92400e; }
+.tag-red    { background: #fee2e2; color: #991b1b; }
+
+/* ── Avatar ── */
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 700; color: var(--white);
+  flex-shrink: 0;
+}
+.avatar-sm { width: 28px; height: 28px; font-size: .65rem; }
+.avatar-lg { width: 44px; height: 44px; font-size: .9rem; }
+.av-green  { background: var(--green); }
+.av-blue   { background: var(--blue); }
+.av-purple { background: #7c3aed; }
+.av-orange { background: #ea580c; }
+.av-pink   { background: #db2777; }
+.av-teal   { background: #0d9488; }
+
+/* ── Progress bar ── */
+.progress-wrap { background: var(--gray-200); border-radius: 999px; height: 8px; overflow: hidden; }
+.progress-bar  { height: 100%; border-radius: 999px; background: var(--green); transition: width .4s; }
+
+/* ── Card ── */
+.card {
+  background: var(--white); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+  padding: 24px;
+}
+
+/* ── Section heading ── */
+.section-heading { text-align: center; margin-bottom: 48px; }
+.section-heading h2 { font-size: 2rem; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
+.section-heading p  { color: var(--gray-500); max-width: 560px; margin: 0 auto; }
+
+/* ── Spinner ── */
+.spinner-wrap { display: flex; justify-content: center; align-items: center; padding: 60px; }
+.spinner {
+  width: 40px; height: 40px; border: 4px solid var(--gray-200);
+  border-top-color: var(--green); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Error box ── */
+.error-box {
+  background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
+  padding: 16px 20px; border-radius: var(--radius); margin: 24px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* ── Responsive helpers ── */
+@media (max-width: 768px) {
+  .section { padding: 56px 0; }
+  .section-heading h2 { font-size: 1.6rem; }
+}
