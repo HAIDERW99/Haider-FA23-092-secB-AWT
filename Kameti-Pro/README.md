@@ -25,25 +25,32 @@ The problem? It's all managed on paper, WhatsApp messages, or just memory — le
 
 
 ### How It Works
-![How It Works](./screenshots/how-it-works.png)
+<img width="945" height="388" alt="image" src="https://github.com/user-attachments/assets/064b51c1-860d-48d8-9324-0216a3ddfd5f" />
+
 
 ### Pricing Plans
-![Pricing](./screenshots/pricing.png)
+<img width="948" height="391" alt="image" src="https://github.com/user-attachments/assets/2d641d1d-37b2-4e22-bb51-8b52e1686066" />
+
 
 ### FAQ Section
-![FAQ](./screenshots/faq.png)
+<img width="938" height="382" alt="image" src="https://github.com/user-attachments/assets/6e618b2e-ead0-4fc1-ae95-ccc3ad06a172" />
+
 
 ### Contact Page
-![Contact](./screenshots/contact.png)
+<img width="923" height="440" alt="image" src="https://github.com/user-attachments/assets/fc06931b-ef8d-4728-8a81-b9dcd7e35b6b" />
+
 
 ### CTA & Footer
-![Footer](./screenshots/footer.png)
+<img width="946" height="385" alt="image" src="https://github.com/user-attachments/assets/cb1f191c-8363-4e68-a026-536f5e24b9bf" />
+
 
 ### Dashboard
-![Dashboard](./screenshots/dashboard.png)
+<img width="945" height="434" alt="image" src="https://github.com/user-attachments/assets/80e6daca-4c45-4390-956d-6b4734d1331d" />
+
 
 ### Committee Detail — Payment Status
-![Payment Status](./screenshots/payment-status.png)
+<img width="945" height="434" alt="image" src="https://github.com/user-attachments/assets/1bd5ce6a-0629-4d21-88d9-72a3ea22d70c" />
+
 
 ---
 
