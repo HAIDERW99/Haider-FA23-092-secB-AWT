@@ -49,7 +49,8 @@ The problem? It's all managed on paper, WhatsApp messages, or just memory — le
 
 
 ### Committee Detail — Payment Status
-<img width="945" height="434" alt="image" src="https://github.com/user-attachments/assets/1bd5ce6a-0629-4d21-88d9-72a3ea22d70c" />
+<img width="942" height="353" alt="image" src="https://github.com/user-attachments/assets/c8e60cc5-3344-458b-bdb2-0c9717d664cc" />
+
 
 
 ---
