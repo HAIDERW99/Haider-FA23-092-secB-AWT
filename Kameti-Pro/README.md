@@ -21,7 +21,8 @@ The problem? It's all managed on paper, WhatsApp messages, or just memory — le
 ## 🖼️ Screenshots
 
 ### Home Page
-![Home Page](./screenshots/home.png)
+<img width="945" height="434" alt="image" src="https://github.com/user-attachments/assets/c244f2c6-6568-4c99-b6dc-bddfe326a79d" />
+
 
 ### How It Works
 ![How It Works](./screenshots/how-it-works.png)
