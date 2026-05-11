@@ -19,6 +19,7 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:5173',
   'http://127.0.0.1:53200',
   'http://127.0.0.1:49849',
+  'https://haider-fa-23-092-sec-b-awt-y2qt.vercel.app',
 ];
 
 app.use(
@@ -41,6 +42,16 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// ── Root route ────────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to KametiPro API 🚀',
+    version: '1.0.0',
+    docs: '/api/health',
+  });
+});
 
 // ── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
