@@ -17,7 +17,7 @@ const extractError = (err) => {
 
   // Network-level error (no response at all = CORS / server down)
   if (!err.response) {
-    return 'Server se connection nahi ho saka. Backend chal raha hai? (localhost:5000)';
+    return 'Server se connection nahi ho saka. Internet ya backend check karo.';
   }
 
   return err.message || 'Kuch ghalat ho gaya. Dobara koshish karo.';

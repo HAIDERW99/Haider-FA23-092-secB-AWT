@@ -2,11 +2,12 @@ import axios from 'axios';
 
 /**
  * Central Axios instance.
- * Base URL points at the local Express backend.
- * Set VITE_API_BASE_URL in .env to override (e.g. for production).
+ * Base URL is driven entirely by the VITE_API_BASE_URL environment variable.
+ *   - Local dev  → .env              → http://localhost:5000/api
+ *   - Production → .env.production   → https://haider-fa-23-092-sec-b-awt.vercel.app/api
  */
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
