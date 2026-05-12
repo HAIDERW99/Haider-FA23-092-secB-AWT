@@ -4,9 +4,11 @@ const morgan       = require('morgan');
 const errorHandler = require('./middleware/errorHandler');
 
 // ── Route imports ─────────────────────────────────────────────────────────────
-const authRoutes      = require('./routes/authRoutes');
-const committeeRoutes = require('./routes/committeeRoutes');
-const paymentRoutes   = require('./routes/paymentRoutes');
+const authRoutes         = require('./routes/authRoutes');
+const committeeRoutes    = require('./routes/committeeRoutes');
+const paymentRoutes      = require('./routes/paymentRoutes');
+const joinRequestRoutes  = require('./routes/joinRequestRoutes');
+const ratingRoutes       = require('./routes/ratingRoutes');
 
 const app = express();
 
@@ -64,9 +66,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',        authRoutes);
-app.use('/api/committees',  committeeRoutes);
-app.use('/api/payments',    paymentRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/committees',    committeeRoutes);
+app.use('/api/payments',      paymentRoutes);
+app.use('/api/join-requests', joinRequestRoutes);
+app.use('/api/ratings',       ratingRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {

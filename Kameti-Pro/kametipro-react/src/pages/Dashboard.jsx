@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchCommittees } from '../api/committeeApi';
+import {
+  fetchCommittees,
+  fetchPublicCommittees,
+  sendJoinRequest,
+  fetchIncomingRequests,
+  respondToJoinRequest,
+  toggleCommitteePublic,
+} from '../api/committeeApi';
 import { getUser, logout } from '../utils/authUtils';
 import axiosInstance from '../api/axiosInstance';
 import CreateCommitteeModal from '../components/CreateCommitteeModal';
@@ -14,8 +21,8 @@ function getAvatarColor(index) {
   return AVATAR_COLORS[index % AVATAR_COLORS.length];
 }
 
-function CommitteeCard({ committee, onDelete, isOwner }) {
-  const { id, icon, name, amount, totalMembers, city, status, currentMonth, totalMonths, currentTurn, members } = committee;
+function CommitteeCard({ committee, onDelete, isOwner, onTogglePublic, togglePublicLoading }) {
+  const { id, icon, name, amount, totalMembers, city, status, currentMonth, totalMonths, currentTurn, members, isPublic } = committee;
   const progress = Math.round((currentMonth / totalMonths) * 100);
   const paidCount = members?.filter((m) => m.paymentStatus === 'paid').length ?? 0;
   const pendingCount = members?.filter((m) => m.paymentStatus === 'due').length ?? 0;
@@ -105,6 +112,23 @@ function CommitteeCard({ committee, onDelete, isOwner }) {
       </div>
 
       <div style={{ padding: '0 20px 16px' }}>
+        {isOwner && (
+          <button
+            onClick={() => onTogglePublic(id, isPublic)}
+            disabled={togglePublicLoading}
+            style={{
+              width: '100%', padding: '6px', marginBottom: '8px',
+              background: isPublic ? '#fef9c3' : 'var(--gray-100)',
+              color: isPublic ? '#92400e' : 'var(--gray-600)',
+              border: isPublic ? '1.5px solid #fbbf24' : '1.5px solid var(--gray-300)',
+              borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600',
+              cursor: togglePublicLoading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            {togglePublicLoading ? '...' : isPublic ? '🌐 Public (Private Karein)' : '🔒 Private (Public Karein)'}
+          </button>
+        )}
         <Link
           to={`/committee/${id}`}
           className="btn btn-outline btn-sm"
@@ -127,6 +151,18 @@ export default function Dashboard() {
   const [deleteConfirm, setDeleteConfirm]   = useState(null); // { id, name }
   const [deleteLoading, setDeleteLoading]   = useState(false);
 
+  // ── Available Committees state ──────────────────────────────────────────────
+  const [publicCommittees,    setPublicCommittees]    = useState([]);
+  const [publicLoading,       setPublicLoading]       = useState(true);
+  const [joinLoadingId,       setJoinLoadingId]       = useState(null); // committeeId being requested
+
+  // ── Incoming Requests state (for committee owners) ──────────────────────────
+  const [incomingRequests,    setIncomingRequests]    = useState([]);
+  const [respondLoadingId,    setRespondLoadingId]    = useState(null);
+
+  // ── Toggle public loading ───────────────────────────────────────────────────
+  const [togglePublicLoadingId, setTogglePublicLoadingId] = useState(null);
+
   const user = getUser(); // { _id, name, email, ... }
 
   useEffect(() => {
@@ -138,6 +174,17 @@ export default function Dashboard() {
       .then((data) => { if (!cancelled) setCommittees(data); })
       .catch((err) => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
+
+    // Fetch public committees for "Available Committees" section
+    fetchPublicCommittees()
+      .then((data) => { if (!cancelled) setPublicCommittees(data); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setPublicLoading(false); });
+
+    // Fetch incoming join requests for committees I own
+    fetchIncomingRequests()
+      .then((data) => { if (!cancelled) setIncomingRequests(data); })
+      .catch(() => { if (!cancelled) setIncomingRequests([]); });
 
     return () => { cancelled = true; };
   }, []);
@@ -176,6 +223,62 @@ export default function Dashboard() {
     } finally {
       setDeleteLoading(false);
       setDeleteConfirm(null);
+    }
+  };
+
+  const handleJoinRequest = async (committeeId) => {
+    setJoinLoadingId(committeeId);
+    try {
+      await sendJoinRequest(committeeId);
+      // Keep the card visible — only update the button state to "pending"
+      // The card must NOT be removed from the list; user should see "Request Pending" status
+      setPublicCommittees((prev) =>
+        prev.map((c) => c._id === committeeId ? { ...c, myRequestStatus: 'pending' } : c)
+      );
+      setSuccessMessage('Request bhej di gayi! Owner ke jawab ka intezaar karein.');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      // On error, do NOT mutate publicCommittees — card stays as-is with the button
+      setError(err.response?.data?.message || 'Request bhejte waqt koi masla hua.');
+      setTimeout(() => setError(null), 4000);
+    } finally {
+      setJoinLoadingId(null);
+    }
+  };
+
+  const handleRespondToRequest = async (requestId, action) => {
+    setRespondLoadingId(requestId);
+    try {
+      await respondToJoinRequest(requestId, action);
+      setIncomingRequests((prev) => prev.filter((r) => r._id !== requestId));
+      setSuccessMessage(action === 'accept' ? 'Member add ho gaya.' : 'Request reject kar di gayi.');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      // Refresh committees to show new member
+      if (action === 'accept') {
+        fetchCommittees().then((data) => setCommittees(data)).catch(() => {});
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Response dete waqt koi masla hua.');
+      setTimeout(() => setError(null), 4000);
+    } finally {
+      setRespondLoadingId(null);
+    }
+  };
+
+  const handleTogglePublic = async (committeeId, currentIsPublic) => {
+    setTogglePublicLoadingId(committeeId);
+    try {
+      const res = await toggleCommitteePublic(committeeId);
+      setCommittees((prev) =>
+        prev.map((c) => c.id === committeeId ? { ...c, isPublic: res.isPublic } : c)
+      );
+      setSuccessMessage(res.message);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Toggle karte waqt koi masla hua.');
+      setTimeout(() => setError(null), 4000);
+    } finally {
+      setTogglePublicLoadingId(null);
     }
   };
 
@@ -296,6 +399,8 @@ export default function Dashboard() {
                   committee={c}
                   onDelete={handleDeleteClick}
                   isOwner={user && (c.admin === user._id || c.admin === user.id)}
+                  onTogglePublic={handleTogglePublic}
+                  togglePublicLoading={togglePublicLoadingId === c.id}
                 />
               ))
             ) : (
@@ -325,6 +430,271 @@ export default function Dashboard() {
             ✅ {successMessage}
           </div>
         )}
+
+        {/* ── Incoming Join Requests (visible to committee owners) ─────────── */}
+        {committees.some((c) => user && (c.admin === user._id || c.admin === user.id)) && (
+          <div style={{ marginTop: '48px' }}>
+            <div className="section-header" style={{ marginBottom: '16px' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📬 Incoming Join Requests
+                {incomingRequests.length > 0 && (
+                  <span style={{
+                    background: 'var(--red)', color: 'white',
+                    borderRadius: '999px', padding: '1px 8px',
+                    fontSize: '0.75rem', fontWeight: '700',
+                  }}>
+                    {incomingRequests.length}
+                  </span>
+                )}
+              </h2>
+            </div>
+            {incomingRequests.length === 0 ? (
+              <div style={{
+                background: 'white', border: '1px solid var(--gray-200)',
+                borderRadius: 'var(--radius)', padding: '24px 20px',
+                textAlign: 'center', color: 'var(--gray-400)',
+                fontSize: '0.9rem', boxShadow: 'var(--shadow-sm)',
+              }}>
+                📭 Abhi koi join request nahi hai.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {incomingRequests.map((req) => (
+                  <div
+                    key={req._id}
+                    style={{
+                      background: 'white', border: '1px solid var(--gray-200)',
+                      borderRadius: 'var(--radius)', padding: '16px 20px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      flexWrap: 'wrap', gap: '12px', boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: '700', color: 'var(--gray-900)', marginBottom: '2px' }}>
+                        {req.requester?.name || '—'}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--gray-500)' }}>
+                        {req.requester?.phone} &nbsp;•&nbsp;
+                        Committee: <strong>{req.committee?.name}</strong> &nbsp;•&nbsp;
+                        ₨{req.committee?.monthlyContribution?.toLocaleString()}/month
+                      </div>
+                      {req.message && (
+                        <div style={{ fontSize: '0.82rem', color: 'var(--gray-600)', marginTop: '4px', fontStyle: 'italic' }}>
+                          "{req.message}"
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleRespondToRequest(req._id, 'accept')}
+                        disabled={respondLoadingId === req._id}
+                        style={{
+                          padding: '7px 16px', borderRadius: '8px',
+                          background: 'var(--green)', color: 'white',
+                          border: 'none', fontWeight: '700', fontSize: '0.85rem',
+                          cursor: respondLoadingId === req._id ? 'not-allowed' : 'pointer',
+                          opacity: respondLoadingId === req._id ? 0.7 : 1,
+                        }}
+                      >
+                        {respondLoadingId === req._id ? '...' : '✓ Accept'}
+                      </button>
+                      <button
+                        onClick={() => handleRespondToRequest(req._id, 'reject')}
+                        disabled={respondLoadingId === req._id}
+                        style={{
+                          padding: '7px 16px', borderRadius: '8px',
+                          background: 'white', color: 'var(--red)',
+                          border: '1.5px solid var(--red)', fontWeight: '700', fontSize: '0.85rem',
+                          cursor: respondLoadingId === req._id ? 'not-allowed' : 'pointer',
+                          opacity: respondLoadingId === req._id ? 0.7 : 1,
+                        }}
+                      >
+                        ✕ Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Available Committees (Browse & Join) ──────────────────────────── */}
+        <div style={{
+          marginTop: '56px',
+          paddingTop: '40px',
+          borderTop: '2px solid var(--gray-200)',
+        }}>
+          <div className="section-header" style={{ marginBottom: '8px' }}>
+            <div>
+              <h2>🌐 Dusron Ki Committees</h2>
+              <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginTop: '4px' }}>
+                Public committees jisme aap join request bhej sakte hain
+              </p>
+            </div>
+          </div>
+
+          {publicLoading ? (
+            <div className="spinner-wrap"><div className="spinner" /></div>
+          ) : publicCommittees.length === 0 ? (
+            <div className="empty-state" style={{ gridColumn: 'unset', padding: '40px 24px' }}>
+              <div className="empty-state__icon">🔍</div>
+              <h3>Koi public committee nahi mili</h3>
+              <p>Abhi koi committee publicly listed nahi hai.</p>
+            </div>
+          ) : (
+            <div className="dashboard__grid">
+              {publicCommittees.map((c) => {
+                return (
+                  <article
+                    key={c._id}
+                    className="dash-committee-card"
+                    aria-label={`Available committee: ${c.name}`}
+                  >
+                    <div className="dash-committee-card__top">
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div className="dash-committee-card__icon-wrap">🏦</div>
+                        <div>
+                          <div className="dash-committee-card__name">{c.name}</div>
+                          <div className="dash-committee-card__meta">
+                            ₨{c.monthlyContribution?.toLocaleString()}/month &nbsp;•&nbsp;
+                            {c.totalMembers} members &nbsp;•&nbsp; {c.city || '—'}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="tag tag-green">
+                        {c.openSlots} slot{c.openSlots !== 1 ? 's' : ''} open
+                      </span>
+                    </div>
+
+                    <div className="dash-committee-card__body">
+                      {/* Owner info + rating */}
+                      <div style={{
+                        background: 'var(--gray-50)', borderRadius: '8px',
+                        padding: '10px 12px', marginBottom: '12px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        flexWrap: 'wrap', gap: '6px',
+                      }}>
+                        <div style={{ fontSize: '0.82rem', color: 'var(--gray-700)' }}>
+                          👤 <strong>{c.admin?.name || '—'}</strong>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            background: 'var(--green-light)', color: 'var(--green-dark)',
+                            padding: '2px 8px', borderRadius: '999px',
+                            fontSize: '0.75rem', fontWeight: '700',
+                          }}>
+                            ⭐ {c.admin?.avgRating ?? 4.0}
+                            {c.admin?.ratingCount > 0 && ` (${c.admin.ratingCount})`}
+                          </span>
+                          {c.admin?.isBeginner && (
+                            <span style={{
+                              background: '#fef9c3', color: '#92400e',
+                              border: '1px solid #fbbf24',
+                              padding: '2px 6px', borderRadius: '999px',
+                              fontSize: '0.7rem', fontWeight: '700',
+                            }}>
+                              🌱 Beginner
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="dash-committee-card__stats">
+                        <div className="dash-stat">
+                          <div className="dash-stat__value">₨{c.monthlyContribution?.toLocaleString()}</div>
+                          <div className="dash-stat__label">Per Month</div>
+                        </div>
+                        <div className="dash-stat">
+                          <div className="dash-stat__value">{c.durationMonths} months</div>
+                          <div className="dash-stat__label">Duration</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '12px 20px 16px' }}>
+                      {c.myRequestStatus === 'pending' ? (
+                        <div style={{
+                          width: '100%', padding: '8px',
+                          background: '#fef9c3', color: '#92400e',
+                          border: '1.5px solid #fbbf24',
+                          borderRadius: '8px', textAlign: 'center',
+                          fontSize: '0.85rem', fontWeight: '700',
+                        }}>
+                          ⏳ Request Pending
+                        </div>
+                      ) : c.myRequestStatus === 'accepted' ? (
+                        <div style={{
+                          width: '100%', padding: '8px',
+                          background: 'var(--green-light)', color: 'var(--green-dark)',
+                          border: '1.5px solid var(--green)',
+                          borderRadius: '8px', textAlign: 'center',
+                          fontSize: '0.85rem', fontWeight: '700',
+                        }}>
+                          ✓ Joined
+                        </div>
+                      ) : c.myRequestStatus === 'rejected' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{
+                            textAlign: 'center', fontSize: '0.78rem',
+                            fontWeight: '600', color: '#991b1b',
+                          }}>
+                            ✕ Request Reject Ho Gayi
+                          </div>
+                          <button
+                            onClick={() => handleJoinRequest(c._id)}
+                            disabled={joinLoadingId === c._id}
+                            style={{
+                              width: '100%', padding: '8px',
+                              background: 'white', color: 'var(--green)',
+                              border: '2px solid var(--green)',
+                              borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700',
+                              cursor: joinLoadingId === c._id ? 'not-allowed' : 'pointer',
+                              opacity: joinLoadingId === c._id ? 0.7 : 1,
+                              transition: 'background 0.2s, color 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (joinLoadingId !== c._id) {
+                                e.currentTarget.style.background = 'var(--green)';
+                                e.currentTarget.style.color = 'white';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'white';
+                              e.currentTarget.style.color = 'var(--green)';
+                            }}
+                          >
+                            {joinLoadingId === c._id ? 'Bhej raha hai...' : '🔄 Dobara Request Bhejo'}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleJoinRequest(c._id)}
+                          disabled={joinLoadingId === c._id || c.openSlots === 0}
+                          style={{
+                            width: '100%', padding: '9px',
+                            background: c.openSlots === 0 ? 'var(--gray-300)' : 'var(--green)',
+                            color: 'white', border: 'none', borderRadius: '8px',
+                            fontSize: '0.9rem', fontWeight: '700',
+                            cursor: joinLoadingId === c._id || c.openSlots === 0 ? 'not-allowed' : 'pointer',
+                            opacity: joinLoadingId === c._id ? 0.7 : 1,
+                            transition: 'background 0.2s',
+                          }}
+                        >
+                          {joinLoadingId === c._id
+                            ? 'Bhej raha hai...'
+                            : c.openSlots === 0
+                            ? 'Committee Full'
+                            : '📩 Request Bhejo'}
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Create Committee Modal */}
         <CreateCommitteeModal

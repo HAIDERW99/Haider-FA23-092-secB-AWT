@@ -52,6 +52,13 @@ const memberSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Merit score assigned by committee admin (0–100)
+    meritScore: {
+      type: Number,
+      min: [0, 'Merit score cannot be negative'],
+      max: [100, 'Merit score cannot exceed 100'],
+      default: null,
+    },
   },
   { _id: true }
 );
@@ -124,6 +131,11 @@ const committeeSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // Whether this committee is publicly listed for others to request joining
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
@@ -142,7 +154,8 @@ committeeSchema.virtual('progressPercent').get(function () {
 
 // ── Virtual: total members count ─────────────────────────────────────────────
 committeeSchema.virtual('totalMembers').get(function () {
-  return this.members.length;
+  // Guard against partial documents (e.g. when only selected fields are populated)
+  return Array.isArray(this.members) ? this.members.length : 0;
 });
 
 committeeSchema.set('toJSON',   { virtuals: true });

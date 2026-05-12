@@ -4,6 +4,31 @@ import { registerUser } from '../api/authApi';
 import { saveAuth, isLoggedIn } from '../utils/authUtils';
 import './Login.css'; // reuse same auth styles
 
+// ── Field helper — defined OUTSIDE the component so it is never re-created ────
+// If defined inside, React treats it as a new component type on every render,
+// unmounts the old input, and the focused field loses focus after each keystroke.
+function Field({ id, label, name, type = 'text', placeholder, autoComplete, form, errors, onChange }) {
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        type={type}
+        name={name}
+        className={`form-input${errors[name] ? ' error' : ''}`}
+        placeholder={placeholder}
+        value={form[name]}
+        onChange={onChange}
+        autoComplete={autoComplete}
+        aria-describedby={errors[name] ? `${id}-err` : undefined}
+      />
+      {errors[name] && (
+        <span id={`${id}-err`} className="form-error" role="alert">⚠ {errors[name]}</span>
+      )}
+    </div>
+  );
+}
+
 export default function Signup() {
   const navigate = useNavigate();
 
@@ -86,26 +111,7 @@ export default function Signup() {
     }
   };
 
-  // ── Field helper ─────────────────────────────────────────────────────────────
-  const Field = ({ id, label, name, type = 'text', placeholder, autoComplete }) => (
-    <div className="form-group">
-      <label className="form-label" htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        type={type}
-        name={name}
-        className={`form-input${errors[name] ? ' error' : ''}`}
-        placeholder={placeholder}
-        value={form[name]}
-        onChange={handleChange}
-        autoComplete={autoComplete}
-        aria-describedby={errors[name] ? `${id}-err` : undefined}
-      />
-      {errors[name] && (
-        <span id={`${id}-err`} className="form-error" role="alert">⚠ {errors[name]}</span>
-      )}
-    </div>
-  );
+  // ── Field helper moved outside component — see top of file ──────────────────
 
   return (
     <main className="auth-page" aria-label="Signup page">
@@ -128,6 +134,9 @@ export default function Signup() {
             name="name"
             placeholder="Ahmed Khan"
             autoComplete="name"
+            form={form}
+            errors={errors}
+            onChange={handleChange}
           />
           <Field
             id="signup-email"
@@ -136,6 +145,9 @@ export default function Signup() {
             type="email"
             placeholder="aapka@email.com"
             autoComplete="email"
+            form={form}
+            errors={errors}
+            onChange={handleChange}
           />
           <Field
             id="signup-phone"
@@ -144,6 +156,9 @@ export default function Signup() {
             type="tel"
             placeholder="03001234567"
             autoComplete="tel"
+            form={form}
+            errors={errors}
+            onChange={handleChange}
           />
 
           {/* Password with toggle */}

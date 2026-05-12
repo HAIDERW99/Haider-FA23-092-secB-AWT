@@ -32,5 +32,7 @@ export const saveAuth = (token, user) => {
 export const logout = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  // Reset disclaimer so it shows again on next login
+  sessionStorage.removeItem('kp_disclaimer_dismissed');
   window.location.href = '/login';
 };

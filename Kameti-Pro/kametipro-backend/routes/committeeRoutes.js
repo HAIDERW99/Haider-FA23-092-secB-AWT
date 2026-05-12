@@ -13,6 +13,8 @@ const {
   removeMember,
   updatePaymentStatus,
 } = require('../controllers/committeeController');
+const { togglePublic }    = require('../controllers/joinRequestController');
+const { updateMeritScore } = require('../controllers/meritController');
 const { protect } = require('../middleware/auth');
 const validate    = require('../middleware/validate');
 
@@ -67,8 +69,14 @@ router.get('/',     getMyCommittees);
 router.post('/:id/members',  addMemberRules, validate, addMember);
 router.delete('/:id/members/:memberId', removeMember);
 
+// Merit score (admin only)
+router.patch('/:id/members/:memberId/merit', updateMeritScore);
+
 // Payment Status Update (admin only) - Put before general /:id routes
 router.patch('/:id/payments/:memberId', updatePaymentRules, validate, updatePaymentStatus);
+
+// Toggle public listing (admin only)
+router.patch('/:id/toggle-public', togglePublic);
 
 // Invite - Put after more specific routes
 router.post('/join/:inviteToken',     joinCommittee);

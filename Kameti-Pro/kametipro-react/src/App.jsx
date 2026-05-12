@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar          from './components/Navbar';
 import Footer          from './components/Footer';
 import ProtectedRoute  from './components/ProtectedRoute';
+import DisclaimerBanner from './components/DisclaimerBanner';
 import Home            from './pages/Home';
 import Login           from './pages/Login';
 import Signup          from './pages/Signup';
@@ -55,6 +56,7 @@ export default function App() {
         />
       </Routes>
       <Footer />
+      <DisclaimerBanner />
     </BrowserRouter>
   );
 }

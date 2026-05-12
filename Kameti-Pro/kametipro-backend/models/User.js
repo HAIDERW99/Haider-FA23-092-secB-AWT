@@ -37,6 +37,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // ── Owner rating stats — updated on every new rating received ────────────
+    ownerStats: {
+      avgRating:   { type: Number, default: 4.0, min: 1, max: 5 },
+      ratingCount: { type: Number, default: 0, min: 0 },
+      isBeginner:  { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

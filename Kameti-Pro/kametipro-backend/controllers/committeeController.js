@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Committee = require('../models/Committee');
 const Payment = require('../models/Payment');
 const { generateTurnOrder, appendMemberToTurnOrder } = require('../utils/turnOrder');
+const { sendMemberAddedEmail } = require('../utils/email');
 
 // ── Helper: seed Payment documents for all members for a given month ──────────
 const seedPaymentsForMonth = async (committee, monthNumber) => {
@@ -343,6 +344,18 @@ const addMember = async (req, res, next) => {
     );
 
     await committee.save();
+
+    // Fire-and-forget confirmation email — never blocks the response
+    if (email) {
+      sendMemberAddedEmail({
+        memberEmail:    email,
+        memberName:     name,
+        committeeName:  committee.name,
+        monthlyAmount:  committee.monthlyContribution,
+        durationMonths: committee.durationMonths,
+        ownerName:      req.user.name,
+      });
+    }
 
     res.status(201).json({ 
       success: true, 

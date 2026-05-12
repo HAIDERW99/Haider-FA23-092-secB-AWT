@@ -63,6 +63,7 @@ const normalise = (c, index = 0) => {
     totalMembers: c.totalMembers ?? c.members?.length ?? 0,
     city:         c.city || '',
     status:       c.status || 'active',
+    isPublic:     c.isPublic ?? false,
     currentMonth: c.currentMonth ?? 1,
     totalMonths:  c.durationMonths ?? c.totalMonths ?? 1,
     currentTurn:  c.currentTurn || (c.turnOrder?.[c.currentMonth - 1]?.member?.name) || '—',
@@ -85,6 +86,7 @@ const normalise = (c, index = 0) => {
         paymentStatus: (m.paymentStatus || 'upcoming').toLowerCase(),
         memberStatus:  m.status || 'active',
         isAdmin:       m.isAdmin || false,
+        meritScore:    m.meritScore ?? null,
       };
     }),
   };
@@ -126,4 +128,79 @@ export async function fetchCommitteeById(id) {
     if (!found) throw new Error('Committee not found');
     return found;
   }
+}
+
+// ─── Public Committees & Join Requests ───────────────────────────────────────
+
+/**
+ * Fetch publicly listed committees available to join.
+ */
+export async function fetchPublicCommittees() {
+  const { data } = await axiosInstance.get('/join-requests/public-committees');
+  return data.committees ?? [];
+}
+
+/**
+ * Send a join request to a committee.
+ */
+export async function sendJoinRequest(committeeId, message = '') {
+  const { data } = await axiosInstance.post(`/join-requests/${committeeId}`, { message });
+  return data;
+}
+
+/**
+ * Get incoming join requests for committees I own.
+ */
+export async function fetchIncomingRequests() {
+  const { data } = await axiosInstance.get('/join-requests/incoming');
+  return data.requests ?? [];
+}
+
+/**
+ * Accept or reject a join request.
+ * @param {string} requestId
+ * @param {'accept'|'reject'} action
+ */
+export async function respondToJoinRequest(requestId, action) {
+  const { data } = await axiosInstance.patch(`/join-requests/${requestId}/respond`, { action });
+  return data;
+}
+
+/**
+ * Toggle public/private listing for a committee (admin only).
+ */
+export async function toggleCommitteePublic(committeeId) {
+  const { data } = await axiosInstance.patch(`/committees/${committeeId}/toggle-public`);
+  return data;
+}
+
+// ─── Owner Ratings ────────────────────────────────────────────────────────────
+
+/**
+ * Rate the owner of a committee (1–5 stars).
+ */
+export async function rateCommitteeOwner(committeeId, rating) {
+  const { data } = await axiosInstance.post(`/ratings/${committeeId}`, { rating });
+  return data;
+}
+
+/**
+ * Get current user's rating + avg for a committee's owner.
+ */
+export async function fetchMyRatingForCommittee(committeeId) {
+  const { data } = await axiosInstance.get(`/ratings/committee/${committeeId}/my`);
+  return data;
+}
+
+// ─── Merit Score ─────────────────────────────────────────────────────────────
+
+/**
+ * Update a member's merit score (admin only).
+ */
+export async function updateMeritScore(committeeId, memberId, meritScore) {
+  const { data } = await axiosInstance.patch(
+    `/committees/${committeeId}/members/${memberId}/merit`,
+    { meritScore }
+  );
+  return data;
 }

@@ -181,7 +181,7 @@ export default function CreateCommitteeModal({ isOpen, onClose, onSuccess }) {
 
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-              Total Members *
+              Total Months *
             </label>
             <input
               type="number"

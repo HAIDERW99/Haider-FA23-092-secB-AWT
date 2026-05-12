@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchCommitteeById } from '../api/committeeApi';
+import { fetchCommitteeById, fetchMyRatingForCommittee, updateMeritScore } from '../api/committeeApi';
 import { getUser } from '../utils/authUtils';
 import axiosInstance from '../api/axiosInstance';
 import AddMemberModal from '../components/AddMemberModal';
 import UpdatePaymentModal from '../components/UpdatePaymentModal';
+import RateOwnerModal from '../components/RateOwnerModal';
 import './CommitteeDetail.css';
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -33,6 +34,18 @@ export default function CommitteeDetail() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // ── Rating state ────────────────────────────────────────────────────────────
+  const [showRateModal,  setShowRateModal]  = useState(false);
+  const [ownerAvgRating, setOwnerAvgRating] = useState(null);
+  const [ratingCount,    setRatingCount]    = useState(0);
+  const [myRating,       setMyRating]       = useState(null);
+  const [isBeginner,     setIsBeginner]     = useState(true);
+
+  // ── Merit score edit state ──────────────────────────────────────────────────
+  const [editingMeritId,    setEditingMeritId]    = useState(null); // memberId being edited
+  const [meritInputValue,   setMeritInputValue]   = useState('');
+  const [meritSaving,       setMeritSaving]       = useState(false);
+
   const currentUser = getUser();
 
   useEffect(() => {
@@ -54,6 +67,18 @@ export default function CommitteeDetail() {
         }
       })
       .finally(() => { if (!cancelled) setLoading(false); });
+
+    // Fetch rating info for this committee
+    fetchMyRatingForCommittee(id)
+      .then((res) => {
+        if (!cancelled) {
+          setMyRating(res.myRating);
+          setOwnerAvgRating(res.avgRating);
+          setRatingCount(res.ratingCount);
+          setIsBeginner(res.isBeginner ?? true);
+        }
+      })
+      .catch(() => {}); // non-critical
 
     return () => { cancelled = true; };
   }, [id]);
@@ -106,6 +131,33 @@ export default function CommitteeDetail() {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Member remove karte waqt koi masla hua.');
+    }
+  };
+
+  // ── Merit score save ────────────────────────────────────────────────────────
+  const handleMeritSave = async (memberId) => {
+    const score = parseInt(meritInputValue, 10);
+    if (isNaN(score) || score < 0 || score > 100) {
+      alert('Score 0 se 100 ke darmiyan hona chahiye.');
+      return;
+    }
+    setMeritSaving(true);
+    try {
+      await updateMeritScore(id, memberId, score);
+      // Update local state immediately
+      setCommittee((prev) => ({
+        ...prev,
+        members: prev.members.map((m) =>
+          m.id === memberId ? { ...m, meritScore: score } : m
+        ),
+      }));
+      setEditingMeritId(null);
+      setSuccessMessage('Merit score update ho gaya.');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Merit score save karte waqt koi masla hua.');
+    } finally {
+      setMeritSaving(false);
     }
   };
 
@@ -193,6 +245,55 @@ export default function CommitteeDetail() {
             </div>
           </div>
           <span className="detail__hero-status">{status}</span>
+        </div>
+
+        {/* ── Owner Rating bar ─────────────────────────────────────────────── */}
+        <div style={{
+          background: 'white', border: '1px solid var(--gray-200)',
+          borderRadius: 'var(--radius)', padding: '14px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '12px', marginBottom: '8px',
+          boxShadow: 'var(--shadow-sm)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.9rem', color: 'var(--gray-600)' }}>
+              Owner: <strong style={{ color: 'var(--gray-900)' }}>{adminName || '—'}</strong>
+            </span>
+            {/* Always show a rating — default 4.0 for new owners */}
+            <span style={{
+              background: 'var(--green-light)', color: 'var(--green-dark)',
+              padding: '3px 10px', borderRadius: '999px',
+              fontSize: '0.82rem', fontWeight: '700',
+            }}>
+              ⭐ {ownerAvgRating ?? 4.0}
+              {ratingCount > 0 && ` (${ratingCount} rating${ratingCount !== 1 ? 's' : ''})`}
+            </span>
+            {/* Beginner badge — shown until 5 real ratings */}
+            {isBeginner && (
+              <span style={{
+                background: '#fef9c3', color: '#92400e',
+                border: '1px solid #fbbf24',
+                padding: '2px 8px', borderRadius: '999px',
+                fontSize: '0.75rem', fontWeight: '700',
+              }}>
+                🌱 Beginner
+              </span>
+            )}
+          </div>
+          {!isAdmin && (
+            <button
+              onClick={() => setShowRateModal(true)}
+              style={{
+                padding: '6px 16px', borderRadius: '8px',
+                background: myRating ? 'var(--green-light)' : 'var(--green)',
+                color: myRating ? 'var(--green-dark)' : 'white',
+                border: myRating ? '1.5px solid var(--green)' : 'none',
+                fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer',
+              }}
+            >
+              {myRating ? `⭐ Aapki Rating: ${myRating}/5 (Update)` : '⭐ Owner Ko Rate Karein'}
+            </button>
+          )}
         </div>
 
         {/* Stats row */}
@@ -292,6 +393,7 @@ export default function CommitteeDetail() {
                 <tr>
                   <th scope="col">#</th>
                   <th scope="col">Member</th>
+                  <th scope="col">Merit Score</th>
                   <th scope="col">Payment Date</th>
                   <th scope="col">Amount</th>
                   <th scope="col">Status</th>
@@ -328,6 +430,80 @@ export default function CommitteeDetail() {
                             <div className="member-cell__id">ID: {member.id}</div>
                           </div>
                         </div>
+                      </td>
+                      {/* ── Merit Score cell ── */}
+                      <td>
+                        {editingMeritId === member.id ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={meritInputValue}
+                              onChange={(e) => setMeritInputValue(e.target.value)}
+                              style={{
+                                width: '60px', padding: '4px 6px',
+                                border: '2px solid var(--green)', borderRadius: '6px',
+                                fontSize: '0.82rem', outline: 'none',
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleMeritSave(member.id)}
+                              disabled={meritSaving}
+                              style={{
+                                padding: '3px 8px', background: 'var(--green)',
+                                color: 'white', border: 'none', borderRadius: '4px',
+                                fontSize: '0.72rem', cursor: 'pointer', fontWeight: '700',
+                              }}
+                            >
+                              {meritSaving ? '...' : '✓'}
+                            </button>
+                            <button
+                              onClick={() => setEditingMeritId(null)}
+                              style={{
+                                padding: '3px 6px', background: 'none',
+                                color: 'var(--gray-500)', border: '1px solid var(--gray-300)',
+                                borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer',
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{
+                              background: member.meritScore !== null && member.meritScore !== undefined
+                                ? (member.meritScore >= 75 ? 'var(--green-light)' : member.meritScore >= 50 ? '#fef9c3' : '#fee2e2')
+                                : 'var(--gray-100)',
+                              color: member.meritScore !== null && member.meritScore !== undefined
+                                ? (member.meritScore >= 75 ? 'var(--green-dark)' : member.meritScore >= 50 ? '#92400e' : '#991b1b')
+                                : 'var(--gray-400)',
+                              padding: '2px 8px', borderRadius: '999px',
+                              fontSize: '0.75rem', fontWeight: '700',
+                            }}>
+                              {member.meritScore !== null && member.meritScore !== undefined
+                                ? `Merit: ${member.meritScore}/100`
+                                : '—'}
+                            </span>
+                            {isAdmin && (
+                              <button
+                                onClick={() => {
+                                  setEditingMeritId(member.id);
+                                  setMeritInputValue(member.meritScore ?? '');
+                                }}
+                                title="Merit score edit karein"
+                                style={{
+                                  background: 'none', border: 'none',
+                                  cursor: 'pointer', fontSize: '0.8rem',
+                                  color: 'var(--gray-400)', padding: '2px',
+                                }}
+                              >
+                                ✏️
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td>{member.paymentDate ? new Date(member.paymentDate).toLocaleDateString('en-PK') : '—'}</td>
                       <td style={{ fontWeight: 600 }}>₨{amount.toLocaleString()}</td>
@@ -379,7 +555,7 @@ export default function CommitteeDetail() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={isAdmin ? 6 : 5} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-500)' }}>
+                    <td colSpan={isAdmin ? 7 : 6} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-500)' }}>
                       Is filter ke liye koi record nahi mila.
                     </td>
                   </tr>
@@ -434,6 +610,23 @@ export default function CommitteeDetail() {
             currentAmount={amount}
           />
         )}
+
+        {/* Rate Owner Modal */}
+        <RateOwnerModal
+          isOpen={showRateModal}
+          onClose={() => setShowRateModal(false)}
+          onSuccess={(avg, count, beginner) => {
+            setOwnerAvgRating(avg);
+            setRatingCount(count);
+            setIsBeginner(beginner ?? false);
+            setMyRating(avg); // approximate — will refresh on next load
+            setSuccessMessage('Rating de di gayi. Shukriya!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+          }}
+          committeeId={id}
+          ownerName={adminName || '—'}
+          currentRating={myRating}
+        />
 
       </div>
     </main>
