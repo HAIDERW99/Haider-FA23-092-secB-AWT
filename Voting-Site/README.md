@@ -1,4 +1,5 @@
 # SecureVote
+vercel live link: https://haider-fa-23-092-sec-b-awt-vbak.vercel.app/
 
 **SecureVote** is a full-stack online election platform built for organizations that need trustworthy digital voting. It combines anonymous ballots, real-time participation metrics, verifiable results, and an immutable audit trail—without exposing how any individual voted.
 
