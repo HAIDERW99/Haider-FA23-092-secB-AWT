@@ -205,7 +205,7 @@ function RejectionDialog({
 
 export default function AdminDashboard() {
   const supabase = createBrowserSupabaseClient()
-  const { profile, requireRole } = useAuth()
+  const { profile, requireRole, isLoading: authLoading } = useAuth()
 
   const [requests, setRequests] = useState<CreatorRequest[]>([])
   const [stats, setStats] = useState({ totalUsers: 0, activePolls: 0, successRate: 99.7, pendingRequests: 0 })
@@ -214,45 +214,75 @@ export default function AdminDashboard() {
   const [rejectOpen, setRejectOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [isApproving, setIsApproving] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [isLoadingRequests, setIsLoadingRequests] = useState(true)
+
+  const isAdminReady = !authLoading && profile?.role === "super_admin"
 
   // Enforce super_admin role
   useEffect(() => {
     requireRole("super_admin")
   }, [requireRole])
 
-  // Fetch pending requests
+  // Fetch pending requests via server API (service role after auth check — avoids RLS/session race)
   const fetchRequests = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("creator_requests")
-      .select("*")
-      .eq("status", "pending")
-      .order("submitted_at", { ascending: false })
+    if (!isAdminReady) return
 
-    if (!error && data) setRequests(data)
-  }, [supabase])
+    setIsLoadingRequests(true)
+    setFetchError(null)
 
-  // Fetch platform stats
+    try {
+      const res = await fetch("/api/admin/creator-requests", {
+        credentials: "include",
+        cache: "no-store",
+      })
+      const body = await res.json()
+
+      if (!res.ok) {
+        setFetchError(body.error ?? "Failed to load creator requests")
+        setRequests([])
+        return
+      }
+
+      const loaded = (body.requests ?? []) as CreatorRequest[]
+      const pendingCount =
+        typeof body.pendingCount === "number" ? body.pendingCount : loaded.length
+      setRequests(loaded)
+      setStats((prev) => ({ ...prev, pendingRequests: pendingCount }))
+    } catch {
+      setFetchError("Failed to load creator requests")
+      setRequests([])
+    } finally {
+      setIsLoadingRequests(false)
+    }
+  }, [isAdminReady])
+
+  // Fetch platform stats (after auth session is ready)
   const fetchStats = useCallback(async () => {
-    const [usersRes, electionsRes, pendingRes] = await Promise.all([
+    if (!isAdminReady) return
+
+    const [usersRes, electionsRes] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("elections").select("id", { count: "exact", head: true }).eq("status", "active"),
-      supabase.from("creator_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
     ])
-    setStats({
+    setStats((prev) => ({
       totalUsers: usersRes.count ?? 0,
       activePolls: electionsRes.count ?? 0,
       successRate: 99.7,
-      pendingRequests: pendingRes.count ?? 0,
-    })
-  }, [supabase])
+      pendingRequests: prev.pendingRequests,
+    }))
+  }, [supabase, isAdminReady])
 
   useEffect(() => {
+    if (!isAdminReady) return
     fetchRequests()
     fetchStats()
-  }, [fetchRequests, fetchStats])
+  }, [isAdminReady, fetchRequests, fetchStats])
 
   // Realtime subscription for new requests
   useEffect(() => {
+    if (!isAdminReady) return
+
     const channel = supabase
       .channel("creator-requests-admin")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "creator_requests" }, () => {
@@ -261,7 +291,7 @@ export default function AdminDashboard() {
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [supabase, fetchRequests, fetchStats])
+  }, [supabase, isAdminReady, fetchRequests, fetchStats])
 
   const handleApprove = async (requestId: string) => {
     if (!profile) return
@@ -275,7 +305,7 @@ export default function AdminDashboard() {
     if (error || !data?.success) {
       console.error("Approve error:", error?.message ?? data?.error)
     } else {
-      setRequests((prev) => prev.filter((r) => r.id !== requestId))
+      await fetchRequests()
       fetchStats()
     }
     setIsApproving(null)
@@ -293,7 +323,7 @@ export default function AdminDashboard() {
     if (error || !data?.success) {
       console.error("Reject error:", error?.message ?? data?.error)
     } else {
-      setRequests((prev) => prev.filter((r) => r.id !== selectedRequest.id))
+      await fetchRequests()
       fetchStats()
     }
   }
@@ -363,7 +393,16 @@ export default function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            {filteredRequests.length === 0 ? (
+            {fetchError && (
+              <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {fetchError}
+              </div>
+            )}
+            {isLoadingRequests ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : filteredRequests.length === 0 ? (
               <div className="text-center py-12">
                 <CheckCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                 <h3 className="text-lg font-medium">No pending requests</h3>

@@ -54,12 +54,23 @@ CREATE POLICY "profiles_insert_service"
 -- ============================================================
 -- CREATOR REQUESTS policies
 -- ============================================================
--- Anyone authenticated can submit a request
+-- Authenticated users can submit a request
 CREATE POLICY "creator_requests_insert"
   ON public.creator_requests FOR INSERT
+  TO authenticated
   WITH CHECK (auth.uid() IS NOT NULL);
 
--- Users can view their own requests
+-- Guests can submit without signing in (creator-request form)
+CREATE POLICY "creator_requests_insert_anon"
+  ON public.creator_requests FOR INSERT
+  TO anon
+  WITH CHECK (true);
+
+-- Users can view their own requests (by linked account or matching profile email)
+CREATE POLICY "creator_requests_select_own_user"
+  ON public.creator_requests FOR SELECT
+  USING (user_id = auth.uid());
+
 CREATE POLICY "creator_requests_select_own"
   ON public.creator_requests FOR SELECT
   USING (email = (SELECT email FROM public.profiles WHERE id = auth.uid()));

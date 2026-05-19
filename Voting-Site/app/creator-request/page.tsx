@@ -9,10 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
-import { createBrowserSupabaseClient } from "@/lib/supabase"
 
 export default function CreatorRequestPage() {
-  const supabase = createBrowserSupabaseClient()
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [referenceId, setReferenceId] = useState("")
@@ -35,33 +33,38 @@ export default function CreatorRequestPage() {
     setIsLoading(true)
     setError("")
 
-    // Get current user if logged in (optional — requests can be anonymous)
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const { data, error: insertError } = await (supabase.from("creator_requests") as any)
-      .insert({
-        user_id: user?.id ?? null,
-        first_name: form.firstName,
-        last_name: form.lastName,
-        email: form.email,
-        phone: form.phone,
-        organization_name: form.organization,
-        organization_type: form.type,
-        purpose: form.purpose,
-        expected_voters: form.voters,
+    try {
+      const res = await fetch("/api/creator-requests", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: form.firstName,
+          last_name: form.lastName,
+          email: form.email,
+          phone: form.phone,
+          organization_name: form.organization,
+          organization_type: form.type,
+          purpose: form.purpose,
+          expected_voters: form.voters,
+        }),
       })
-      .select("reference_id")
-      .single() as { data: { reference_id: string } | null; error: any }
 
-    if (insertError) {
-      setError(insertError.message)
+      const body = await res.json()
+
+      if (!res.ok) {
+        setError(body.error ?? "Failed to submit request")
+        setIsLoading(false)
+        return
+      }
+
+      setReferenceId(body.reference_id ?? "")
+      setIsSubmitted(true)
+    } catch {
+      setError("Failed to submit request. Please try again.")
+    } finally {
       setIsLoading(false)
-      return
     }
-
-    setReferenceId((data as any)?.reference_id ?? "")
-    setIsLoading(false)
-    setIsSubmitted(true)
   }
 
   if (isSubmitted) {

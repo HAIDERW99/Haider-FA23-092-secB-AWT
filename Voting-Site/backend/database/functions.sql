@@ -561,3 +561,7 @@ $$;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.elections;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.candidates;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.registrations;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.creator_requests;
+
+GRANT EXECUTE ON FUNCTION public.approve_creator_request(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.reject_creator_request(UUID, UUID, TEXT) TO authenticated;
