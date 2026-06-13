@@ -1,6 +1,6 @@
 # Doctor Hub
 
-🌐 **Live Demo:** [https://doctor-hub-your-app.vercel.app](https://doctor-hub-your-app.vercel.app)
+🌐 **Live Demo:** (https://haider-092-doctor-hub-frontend.vercel.app)
 
 > ⚠️ Replace the above link with your actual Vercel deployment URL after deploying.
 
