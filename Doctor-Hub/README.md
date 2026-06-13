@@ -2,7 +2,6 @@
 
 🌐 **Live Demo:** https://haider-092-doctor-hub-frontend.vercel.app/
 
-> ⚠️ Replace the above link with your actual Vercel deployment URL after deploying.
 
 ---
 
