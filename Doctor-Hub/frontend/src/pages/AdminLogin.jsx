@@ -10,7 +10,7 @@ import Label from '../components/ui/Label'
 import LoadingSpinner from '../components/shared/LoadingSpinner'
 import { Card, CardContent } from '../components/ui/Card'
 
-const ADMIN_ROLES = ['admin', 'superadmin']
+const ADMIN_ROLES = ['admin', 'superadmin', 'super_admin']
 
 const AdminLogin = () => {
   const navigate = useNavigate()
