@@ -1,5 +1,41 @@
 # Doctor Hub
 
+🌐 **Live Demo:** [https://doctor-hub-your-app.vercel.app](https://doctor-hub-your-app.vercel.app)
+
+> ⚠️ Replace the above link with your actual Vercel deployment URL after deploying.
+
+---
+
+## 🔐 Demo Credentials
+
+| Role | Email | Password | Login URL |
+|------|-------|----------|-----------|
+| **Super Admin** | haiderwahla199@gmail.com | 12345678 | [/admin/login](/admin/login) |
+| **Admin** | *(register via Admin Portal)* | — | [/admin/login](/admin/login) |
+| **Doctor** | hamzaweb3565@gmail.com | *(set by admin)* | [/login](/login) → Staff Login |
+| **Patient** | *(register free)* | — | [/register](/register) |
+
+---
+
+## 📸 Screenshots
+
+### 🏠 Home Page
+![Home Page](docs/screenshots/home.png)
+
+### ℹ️ About Page
+![About Page](docs/screenshots/about.png)
+
+### 📞 Contact Page
+![Contact Page](docs/screenshots/contact.png)
+
+### 📊 Super Admin — Analytics Dashboard
+![Super Admin Dashboard](docs/screenshots/superadmin-dashboard.png)
+
+### 🩺 Doctor Portal — Dashboard
+![Doctor Dashboard](docs/screenshots/doctor-dashboard.png)
+
+---
+
 Unified healthcare platform — patients, doctors, assistants, admins in one React app. **Supabase** backend (PostgreSQL).
 
 ## Tech Stack
@@ -87,6 +123,6 @@ npm run dev
 | Doctor | `/doctor/*` |
 | Assistant | `/assistant/*` |
 | Admin | `/admin/*` |
-| Super Admin | `/admin/*` (extra: Admins, Users) |
+| Super Admin | `/admin/*` (extra: Admins, Users, Approvals) |
 
 Public: `/`, `/about`, `/contact`, `/login`, `/register`
