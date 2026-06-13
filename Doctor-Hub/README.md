@@ -11,25 +11,29 @@
 | Role | Email | Password | Login URL |
 |------|-------|----------|-----------|
 | **Super Admin** | haiderwahla199@gmail.com | 12345678 | [/admin/login](/admin/login) |
-| **Admin** | *(register via Admin Portal)* | — | [/admin/login](/admin/login) |
-| **Doctor** | hamzaweb3565@gmail.com | *(set by admin)* | [/login](/login) → Staff Login |
-| **Patient** | *(register free)* | — | [/register](/register) |
+| **Admin** | ali565waseem@gmail.com  | 12345678 | [/admin/login](/admin/login) |
+| **Doctor** | hamzaweb3565@gmail.com | 12345678 | [/login](/login) → Staff Login |
+| **Patient** | ali565usman@gmail.com | 12345678 | [/register](/register) |
+| **Assistant** | ali65hassan69@gmail.com | 12345678 | [/register](/register) |
 
 ---
 
 ## 📸 Screenshots
 
 ### 🏠 Home Page
-![Home Page](docs/screenshots/home.png)
+<img width="946" height="431" alt="image" src="https://github.com/user-attachments/assets/3f51d46d-e8da-4d1c-9704-1072b897f27c" />
+
 
 ### ℹ️ About Page
-![About Page](docs/screenshots/about.png)
+<img width="946" height="434" alt="image" src="https://github.com/user-attachments/assets/580c9c98-133b-486f-8705-fef467d0465a" />
+
 
 ### 📞 Contact Page
-![Contact Page](docs/screenshots/contact.png)
+<img width="948" height="440" alt="image" src="https://github.com/user-attachments/assets/69be5373-7c09-453a-a27c-85b3687bf9ed" />
+
 
 ### 📊 Super Admin — Analytics Dashboard
-![Super Admin Dashboard](docs/screenshots/superadmin-dashboard.png)
+<img width="950" height="463" alt="image" src="https://github.com/user-attachments/assets/99e903b1-a98d-496b-aab4-ba16f7b7c8b2" />
 
 ### 🩺 Doctor Portal — Dashboard
 ![Doctor Dashboard](docs/screenshots/doctor-dashboard.png)
