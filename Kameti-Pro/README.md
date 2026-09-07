@@ -18,6 +18,11 @@ The problem? It's all managed on paper, WhatsApp messages, or just memory — le
 - No more arguments about who paid and who didn't
 
 ---
+| Role | Email | Password | Login URL |
+|------|-------|----------|-----------|
+| **Admin** | haiderwahla199@gmail.com | haider123 | 
+| **User** | hamzaweb3565@gmail.com | 12345678 | 
+
 
 ## 🖼️ Screenshots
 
