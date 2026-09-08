@@ -7,7 +7,7 @@ vercel live link: https://haider-fa-23-092-sec-b-awt-vbak.vercel.app/
 |------|-------|----------|
 | **Admin** |admin@securevote.app	| Admin@SecureVote1 | 
 | **Creator** | creator@securevote.app | Creator@SecureVote1 | 
-| **Creator** | voter@securevote.app | Voter@SecureVote1 | 
+| **voter** | voter@securevote.app | Voter@SecureVote1 | 
 
 ---
 
